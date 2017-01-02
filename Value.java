@@ -6,60 +6,58 @@ public class Value {
 	public Value(double s, double u){
 
 		scalar = s;
-		uncertainty = u;
+		uncertainty = Math.abs(u);
 
 	}
-
-	public void sigfigs(){
-
-		int exp_10 = 0;
-
-		if(uncertainty < 1){
-
-			double temp = uncertainty;
-			while(temp < 1){
-
-				temp *= 10;
-				exp_10--;
-
-			}
-
-		}
-
-		else{
-
-			double temp = uncertainty;
-			while(temp > 1){
-
-				temp /= 10;
-				exp_10++;
-
-			}
-
-		}
-
-		uncertainty = (double) ((int) (.5 + (uncertainty / Math.pow(10, exp_10)))) * Math.pow(10, exp_10);
-		scalar = (double) ((int) (.5 + (scalar / Math.pow(10, exp_10)))) * Math.pow(10, exp_10);
-
-
-	}
-	public String toString(){
-
+	
+	public String sigFigs(){
 		
-		String ret = null;
-		if(uncertainty != 0){
-			sigfigs();
-			ret = scalar + " +/- " + uncertainty;
+		String ret = "";
+		double unc = uncertainty;
+		int distance = 0;
+		if(uncertainty >= 1){
+
+			while(unc >= 10){
+				distance++;
+				unc /= 10;
+			}
+			String uncert = ((uncertainty + .5 * Math.pow(10,distance))+ "").charAt(0) + "";
+			for(int i = 0; i< distance; i++)
+				uncert = uncert + "0";
+			String val = String.format("%.1023f",((scalar + Math.signum(scalar) *.5 * Math.pow(10,distance))));
+			val = val.substring(0, val.indexOf(".")-distance);
+			for(int i = 0; i < distance; i++)
+				val = val + "0";
+			
+			ret = val + " +/- " + uncert;
+
+		}
+		else if(uncertainty < 1 && uncertainty > 0){
+
+			while(unc < 1){
+				distance++;
+				unc *= 10;
+			}
+			String uncert =  String.format("%.1023f",uncertainty+ (.5 * Math.pow(10, -distance)));
+			uncert = uncert.substring(0,2 + distance);
+			String val = String.format("%.1023f",((scalar + Math.signum(scalar) * .5 * Math.pow(10,-distance))));
+			val = val.substring(0,val.indexOf(".") + distance+1);
+			
+			ret = val + " +/- " + uncert;
 		}
 		else{
-			ret = scalar + "";
+			return (""+scalar);
 		}
-		
-		
+
 		return ret;
+		
+	}
+	
+	public String toString(){
+		
+		return sigFigs();
 
 	}
-
 
 	public Value add(Value v){
 

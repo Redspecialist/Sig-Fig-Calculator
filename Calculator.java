@@ -1,28 +1,48 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Calculator {
 
-	Ast expr;
-	Map<String, Value> vars;
-	int index;
+	private Ast expr;
+	private Map<String, Value> vars;
+	private int index;
+	private boolean varsLoaded;
 
-	public Calculator(String expression, Map<String,Value> varlist){
-
-		vars = new HashMap<String,Value>();
-		vars.put("a", new Value(9.0,.1));
-		vars.put("b", new Value(2,1));
-		vars.put("c", new Value(5.0,.2));
-		vars.put("d", new Value(3,3));
-
+	//sets the variables
+	public void setVars(Map <String, Value> v){
+		vars = new HashMap<String, Value>(v);
+		varsLoaded = true;
 	}
 
+	//resets function
+	public void setFunction(String expression){
+		vars = new HashMap<String,Value>();
+		expr = null;
+		index = 0;
+		expr = parseS(tokenize(expression));
+		varsLoaded = false;
+		
+		
+	}
+	
+	//calculates a value from the loaded ast
+	public Value calculate(){
 
+		if(varsLoaded)
+			return calS(expr);
+		else{
+			return null;
+		}
+	}
+
+	//method that prints the Abstract Syntax tree that represents the current expression
 	public void printAST(Ast e){
 
+		//checks for a log operation
 		if(match(e.opp, new log(1))){
 
 			System.out.print(e.opp + "(");
@@ -31,10 +51,9 @@ public class Calculator {
 
 
 		}
+		//checks to see if the value is a variable (Leaf of AST) 
 		else if(match(e.opp, new var(""))){
-
 			System.out.print(e.opp);
-
 		}
 		else{
 
@@ -48,6 +67,7 @@ public class Calculator {
 
 	}
 
+	//Abstract Syntax tree represenation of the opperation
 	class Ast{
 
 		Ast left;
@@ -56,11 +76,13 @@ public class Calculator {
 
 	}
 
-	public Ast parseS(ArrayList<Token> tokens){
+	//S -> E + S | E - S | E
+	private Ast parseS(ArrayList<Token> tokens){
 
 		Ast expr = new Ast();
 		expr.left = parseE(tokens);
-	
+
+		//addition
 		if(index < tokens.size() && match(tokens.get(index), new add())){
 
 			expr.opp = new add();
@@ -68,6 +90,7 @@ public class Calculator {
 			expr.right = parseS(tokens);
 
 		}
+		//subtraction
 		else if(index < tokens.size() && match(tokens.get(index), new sub())){
 
 			expr.opp = new sub();
@@ -82,19 +105,20 @@ public class Calculator {
 		return expr;
 	}
 
-	public Ast parseE(ArrayList<Token> tokens){
+	//E -> T / E | T * E | T
+	private Ast parseE(ArrayList<Token> tokens){
 
 		Ast expr = new Ast();
 
 		expr.left = parseT(tokens);
 		if(index < tokens.size() && match(tokens.get(index), new div())){
-			
+
 			expr.opp = new div();
 			index++;
 			expr.right = parseE(tokens);
 		}
 		else if(index < tokens.size() && match(tokens.get(index), new mult())){
-			
+
 			expr.opp = new mult();
 			index++;
 			expr.right = parseE(tokens);
@@ -108,7 +132,8 @@ public class Calculator {
 		return expr;
 	}
 
-	public Ast parseT(ArrayList<Token> tokens){
+	//T -> (S) | log(S) | Var
+	private Ast parseT(ArrayList<Token> tokens){
 		Ast expr = null;
 		if(match(tokens.get(index),new log(1))){
 			expr = new Ast();
@@ -125,7 +150,7 @@ public class Calculator {
 			}
 		}
 		else if(match(tokens.get(index),new open_paren())){
-			
+
 			index++;
 			expr = parseS(tokens);
 
@@ -144,54 +169,55 @@ public class Calculator {
 		return expr;
 	}
 
-	public boolean match(Token t, Token target){
+	//checks to see if the two classes match, used for interpreting the AST
+	private boolean match(Token t, Token target){
 
 		return t.getClass().equals(target.getClass());
 
 	}
 
-	public ArrayList<Token> tokenize(String expression){
+	//converts an expression into a series of tokens based on operations
+	private ArrayList<Token> tokenize(String expression){
 
 		ArrayList<Token> tknList = new ArrayList<Token>();
 		expression = expression.replaceAll(" ", "");
-		Pattern logMatch = Pattern.compile("^(log|ln)([0-9/.]*)$");
-		for(int i = 0; i < expression.length(); i++){
+		Pattern logMatch = Pattern.compile("^(log|ln)([0-9/.]*)?$");
 
-			String tok = "";
+		//parses each character to build a list of tokens
+		for(int i = 0; i < expression.length(); ){
+			String tok = "" + expression.charAt(i);
 
-			while(i < expression.length() && Pattern.matches("[^+-/*()]", "" + expression.charAt(i))){
-				tok += expression.charAt(i++);
+			//checks to see if current character is a token by itself
+			if(Pattern.matches("[^+*-/()]", "" + expression.charAt(i))){
+				//attempts to read a variable in character by character until another token is interpreted.
+				while(++i < expression.length() && Pattern.matches("[^+*-/()]", "" + expression.charAt(i))){
+					tok += expression.charAt(i);
+				}
 			}
-
+			else{
+				i++;
+			}
 			Matcher m = logMatch.matcher(tok);
-
+			//reacts to log being the targeted token
 			if(m.matches()){
 				double base = 10;
+
 				if(m.group(1).equals("ln")){
-
 					base = Math.E;
-
+					if(m.groupCount() == 2){
+						//TODO throw error
+					}
 				}
 				else{
-
 					if(!m.group(2).equals("")){
-
 						base = Double.parseDouble(m.group(2));
-
 					}
-					//TODO catch combined natural log + specified base
 				}
 				tknList.add(new log(base));
 			}
-			else if(!tok.equals("")){
+			else{
 
-				tknList.add(new var(tok));
-
-			}
-
-			if(i < expression.length()){
-
-				char c = expression.charAt(i);
+				char c = tok.charAt(0);
 
 				Token t = null;
 
@@ -214,8 +240,10 @@ public class Calculator {
 					t = new mult();
 				}
 				else{
-					//TODO error
+					t = new var(tok);
+					vars.put(tok, null);
 				}
+
 				tknList.add(t);
 			}
 
@@ -225,17 +253,8 @@ public class Calculator {
 		return tknList;
 	}
 
-	public static void main(String [] args){
-
-
-		Calculator temp = new Calculator("hi", null);
-
-
-		System.out.println(temp.calS(temp.parseS(temp.tokenize("log(a+log(b/(c-d))) / d"))));
-
-	}
-
-	public Value calS(Ast a){
+	//Calculates based on CFG S -> E + S | E - S | E
+	private Value calS(Ast a){
 		Value ret = null;
 		if(match(a.opp,new sub())){
 			ret = calE(a.left).sub(calS(a.right));
@@ -249,7 +268,8 @@ public class Calculator {
 		return ret;
 	}
 
-	public Value calE(Ast a){
+	//Calculates based on CFG E -> T + E | T - E | T
+	private Value calE(Ast a){
 
 		Value ret = null;
 		if(match(a.opp,new mult())){
@@ -265,7 +285,8 @@ public class Calculator {
 		return ret;
 	}
 
-	public Value calT(Ast a){
+	//Calculates based on CFG T -> log of S | Var
+	private Value calT(Ast a){
 		Value ret = null;
 		if(match(a.opp,new log(1))){
 			ret = calS(a.left).log(((log)a.opp).base);
@@ -273,14 +294,18 @@ public class Calculator {
 		else if(match(a.opp,new var(""))){
 			ret = vars.get(((var)a.opp).varName);
 		}
-		
+
 		if(ret == null){
 			//TODO fail
 		}
 		return ret;
 	}
 
+	public Set<String> getVariables(){
 
+		return vars.keySet();
+
+	}
 
 
 	class Token{ public String toString(){return this.getClass().getName().substring(this.getClass().getName().indexOf('$') + 1);}}
