@@ -29,6 +29,104 @@ public class Calculator {
 
 
 	}
+	
+	private Ast parseS(ArrayList<Token> tokens) throws Exception{
+
+		Ast left = parseE(tokens);
+		return parseSp(tokens,left);
+
+	}
+	private Ast parseSp(ArrayList<Token> tokens, Ast left) throws Exception{
+
+		Ast expr = new Ast();
+
+		if(index < tokens.size() && match(tokens.get(index), new add())){
+
+			expr.opp = new add();
+
+		}
+		else if(index < tokens.size() && match(tokens.get(index), new sub())){
+
+			expr.opp = new sub();
+
+		}
+		else{
+			return left;
+		}
+
+		index++;
+		expr.right = parseE(tokens);
+		expr.left = left;
+
+		return parseSp(tokens,expr);
+
+	}
+	private Ast parseE(ArrayList<Token> tokens) throws Exception{
+
+		Ast left = parseT(tokens);
+		return parseEp(tokens,left);
+
+	}
+	private Ast parseEp(ArrayList<Token> tokens, Ast left) throws Exception{
+
+		Ast expr = new Ast();
+
+		if(index < tokens.size() && match(tokens.get(index), new div())){
+
+			expr.opp = new div();
+
+		}
+		else if(index < tokens.size() && match(tokens.get(index), new mult())){
+
+			expr.opp = new mult();
+
+		}
+		else{
+			return left;
+		}
+
+		index++;
+		expr.right = parseT(tokens);
+		expr.left = left;
+
+		return parseEp(tokens,expr);
+
+	}
+	private Ast parseT(ArrayList<Token> tokens) throws Exception{
+		Ast expr = null;
+		if(match(tokens.get(index),new log(1))){
+			expr = new Ast();
+			expr.opp = tokens.get(index);
+			index++;
+			if(match(tokens.get(index), new open_paren())){
+				index++;
+				expr.left = parseS(tokens);
+				if(!match(tokens.get(index),new end_paren()));//TODO parse error
+				index++;
+			}
+			else{
+				throw new Exception();
+			}
+		}
+		else if(match(tokens.get(index),new open_paren())){
+
+			index++;
+			expr = parseS(tokens);
+
+			if(!match(tokens.get(index),new end_paren())){
+				throw new Exception();
+			}
+			index++;
+		}
+		else if(match(tokens.get(index), new var(""))){
+			expr = new Ast();
+			expr.opp = tokens.get(index);
+			index++;
+
+		}
+
+		return expr;
+	}
 
 	//calculates a value from the loaded ast
 	public Value calculate(){
@@ -80,99 +178,6 @@ public class Calculator {
 		Token opp;
 
 	}
-
-	//S -> E + S | E - S | E
-	/*private Ast parseS(ArrayList<Token> tokens) throws Exception{
-
-		Ast expr = new Ast();
-		expr.left = parseE(tokens);
-
-		//addition
-		if(index < tokens.size() && match(tokens.get(index), new add())){
-
-			expr.opp = new add();
-			index++;
-			expr.right = parseS(tokens);
-
-		}
-		//subtraction
-		else if(index < tokens.size() && match(tokens.get(index), new sub())){
-
-			expr.opp = new sub();
-			index++;
-			expr.right = parseS(tokens);
-
-		}
-		else{
-			expr = expr.left;
-		}
-
-		return expr;
-	}
-
-	//E -> T / E | T * E | T
-	private Ast parseE(ArrayList<Token> tokens) throws Exception{
-
-		Ast expr = new Ast();
-
-		expr.left = parseT(tokens);
-		if(index < tokens.size() && match(tokens.get(index), new div())){
-
-			expr.opp = new div();
-			index++;
-			expr.right = parseE(tokens);
-		}
-		else if(index < tokens.size() && match(tokens.get(index), new mult())){
-
-			expr.opp = new mult();
-			index++;
-			expr.right = parseE(tokens);
-
-		}
-		else{
-
-			expr = expr.left;
-		}
-
-		return expr;
-	}
-
-	//T -> (S) | log(S) | Var
-	private Ast parseT(ArrayList<Token> tokens) throws Exception{
-		Ast expr = null;
-		if(match(tokens.get(index),new log(1))){
-			expr = new Ast();
-			expr.opp = tokens.get(index);
-			index++;
-			if(match(tokens.get(index), new open_paren())){
-				index++;
-				expr.left = parseS(tokens);
-				if(!match(tokens.get(index),new end_paren()));//TODO parse error
-				index++;
-			}
-			else{
-				throw new Exception();
-			}
-		}
-		else if(match(tokens.get(index),new open_paren())){
-
-			index++;
-			expr = parseS(tokens);
-
-			if(!match(tokens.get(index),new end_paren())){
-				throw new Exception();
-			}
-			index++;
-		}
-		else if(match(tokens.get(index), new var(""))){
-			expr = new Ast();
-			expr.opp = tokens.get(index);
-			index++;
-
-		}
-
-		return expr;
-	}*/
 
 	//checks to see if the two classes match, used for interpreting the AST
 	private boolean match(Token t, Token target){
@@ -335,111 +340,10 @@ public class Calculator {
 	}
 
 
-	//class temp{
-		private Ast parseS(ArrayList<Token> tokens) throws Exception{
 
-			Ast left = parseE(tokens);
-			return parseSp(tokens,left);
-
-		}
-		private Ast parseSp(ArrayList<Token> tokens, Ast left) throws Exception{
-
-			Ast expr = new Ast();
-
-			if(index < tokens.size() && match(tokens.get(index), new add())){
-
-				expr.opp = new add();
-
-			}
-			else if(index < tokens.size() && match(tokens.get(index), new sub())){
-
-				expr.opp = new sub();
-
-			}
-			else{
-				return left;
-			}
-
-			index++;
-			expr.right = parseE(tokens);
-			expr.left = left;
-
-			return parseSp(tokens,expr);
-
-		}
-		private Ast parseE(ArrayList<Token> tokens) throws Exception{
-
-			Ast left = parseT(tokens);
-			return parseEp(tokens,left);
-
-		}
-		private Ast parseEp(ArrayList<Token> tokens, Ast left) throws Exception{
-
-			Ast expr = new Ast();
-
-			if(index < tokens.size() && match(tokens.get(index), new div())){
-
-				expr.opp = new div();
-
-			}
-			else if(index < tokens.size() && match(tokens.get(index), new mult())){
-
-				expr.opp = new mult();
-
-			}
-			else{
-				return left;
-			}
-
-			index++;
-			expr.right = parseT(tokens);
-			expr.left = left;
-
-			return parseEp(tokens,expr);
-
-		}
+	
 
 
-
-
-		//T -> (S) | log(S) | Var
-		private Ast parseT(ArrayList<Token> tokens) throws Exception{
-			Ast expr = null;
-			if(match(tokens.get(index),new log(1))){
-				expr = new Ast();
-				expr.opp = tokens.get(index);
-				index++;
-				if(match(tokens.get(index), new open_paren())){
-					index++;
-					expr.left = parseS(tokens);
-					if(!match(tokens.get(index),new end_paren()));//TODO parse error
-					index++;
-				}
-				else{
-					throw new Exception();
-				}
-			}
-			else if(match(tokens.get(index),new open_paren())){
-
-				index++;
-				expr = parseS(tokens);
-
-				if(!match(tokens.get(index),new end_paren())){
-					throw new Exception();
-				}
-				index++;
-			}
-			else if(match(tokens.get(index), new var(""))){
-				expr = new Ast();
-				expr.opp = tokens.get(index);
-				index++;
-
-			}
-
-			return expr;
-		}
-
-		//}
 
 
 }
