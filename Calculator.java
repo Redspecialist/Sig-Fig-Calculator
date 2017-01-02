@@ -1,16 +1,16 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Calculator {
 
-	private Ast expr;
+	Ast expr;
 	private Map<String, Value> vars;
 	private int index;
 	private boolean varsLoaded;
+	ArrayList<String> varNames;
 
 	//sets the variables
 	public void setVars(Map <String, Value> v){
@@ -19,22 +19,27 @@ public class Calculator {
 	}
 
 	//resets function
-	public void setFunction(String expression){
+	public void setFunction(String expression) throws Exception{
 		vars = new HashMap<String,Value>();
+		varNames = new ArrayList<String>();
 		expr = null;
 		index = 0;
 		expr = parseS(tokenize(expression));
 		varsLoaded = false;
-		
-		
+
+
 	}
-	
+
 	//calculates a value from the loaded ast
 	public Value calculate(){
 
-		if(varsLoaded)
+		if(varsLoaded){
+
+			for(String var: vars.keySet()){
+				System.out.println(var + " " + vars.get(var));
+			}
 			return calS(expr);
-		else{
+		}else{
 			return null;
 		}
 	}
@@ -77,7 +82,7 @@ public class Calculator {
 	}
 
 	//S -> E + S | E - S | E
-	private Ast parseS(ArrayList<Token> tokens){
+	/*private Ast parseS(ArrayList<Token> tokens) throws Exception{
 
 		Ast expr = new Ast();
 		expr.left = parseE(tokens);
@@ -106,7 +111,7 @@ public class Calculator {
 	}
 
 	//E -> T / E | T * E | T
-	private Ast parseE(ArrayList<Token> tokens){
+	private Ast parseE(ArrayList<Token> tokens) throws Exception{
 
 		Ast expr = new Ast();
 
@@ -133,7 +138,7 @@ public class Calculator {
 	}
 
 	//T -> (S) | log(S) | Var
-	private Ast parseT(ArrayList<Token> tokens){
+	private Ast parseT(ArrayList<Token> tokens) throws Exception{
 		Ast expr = null;
 		if(match(tokens.get(index),new log(1))){
 			expr = new Ast();
@@ -146,7 +151,7 @@ public class Calculator {
 				index++;
 			}
 			else{
-				//TODO parsing error
+				throw new Exception();
 			}
 		}
 		else if(match(tokens.get(index),new open_paren())){
@@ -155,7 +160,7 @@ public class Calculator {
 			expr = parseS(tokens);
 
 			if(!match(tokens.get(index),new end_paren())){
-				//TODO add parse tree error
+				throw new Exception();
 			}
 			index++;
 		}
@@ -167,7 +172,7 @@ public class Calculator {
 		}
 
 		return expr;
-	}
+	}*/
 
 	//checks to see if the two classes match, used for interpreting the AST
 	private boolean match(Token t, Token target){
@@ -177,7 +182,7 @@ public class Calculator {
 	}
 
 	//converts an expression into a series of tokens based on operations
-	private ArrayList<Token> tokenize(String expression){
+	private ArrayList<Token> tokenize(String expression) throws Exception{
 
 		ArrayList<Token> tknList = new ArrayList<Token>();
 		expression = expression.replaceAll(" ", "");
@@ -205,7 +210,7 @@ public class Calculator {
 				if(m.group(1).equals("ln")){
 					base = Math.E;
 					if(m.groupCount() == 2){
-						//TODO throw error
+						throw new Exception();
 					}
 				}
 				else{
@@ -242,6 +247,9 @@ public class Calculator {
 				else{
 					t = new var(tok);
 					vars.put(tok, null);
+					if(!varNames.contains(tok)){
+						varNames.add(tok);
+					}
 				}
 
 				tknList.add(t);
@@ -294,16 +302,15 @@ public class Calculator {
 		else if(match(a.opp,new var(""))){
 			ret = vars.get(((var)a.opp).varName);
 		}
-
-		if(ret == null){
-			//TODO fail
+		else{
+			ret = calS(a);
 		}
 		return ret;
 	}
 
-	public Set<String> getVariables(){
+	public ArrayList<String> getVariables(){
 
-		return vars.keySet();
+		return varNames;
 
 	}
 
@@ -326,5 +333,113 @@ public class Calculator {
 		public var(String v){varName = v;}	
 		public String toString(){return varName;}
 	}
+
+
+	//class temp{
+		private Ast parseS(ArrayList<Token> tokens) throws Exception{
+
+			Ast left = parseE(tokens);
+			return parseSp(tokens,left);
+
+		}
+		private Ast parseSp(ArrayList<Token> tokens, Ast left) throws Exception{
+
+			Ast expr = new Ast();
+
+			if(index < tokens.size() && match(tokens.get(index), new add())){
+
+				expr.opp = new add();
+
+			}
+			else if(index < tokens.size() && match(tokens.get(index), new sub())){
+
+				expr.opp = new sub();
+
+			}
+			else{
+				return left;
+			}
+
+			index++;
+			expr.right = parseE(tokens);
+			expr.left = left;
+
+			return parseSp(tokens,expr);
+
+		}
+		private Ast parseE(ArrayList<Token> tokens) throws Exception{
+
+			Ast left = parseT(tokens);
+			return parseEp(tokens,left);
+
+		}
+		private Ast parseEp(ArrayList<Token> tokens, Ast left) throws Exception{
+
+			Ast expr = new Ast();
+
+			if(index < tokens.size() && match(tokens.get(index), new div())){
+
+				expr.opp = new div();
+
+			}
+			else if(index < tokens.size() && match(tokens.get(index), new mult())){
+
+				expr.opp = new mult();
+
+			}
+			else{
+				return left;
+			}
+
+			index++;
+			expr.right = parseT(tokens);
+			expr.left = left;
+
+			return parseEp(tokens,expr);
+
+		}
+
+
+
+
+		//T -> (S) | log(S) | Var
+		private Ast parseT(ArrayList<Token> tokens) throws Exception{
+			Ast expr = null;
+			if(match(tokens.get(index),new log(1))){
+				expr = new Ast();
+				expr.opp = tokens.get(index);
+				index++;
+				if(match(tokens.get(index), new open_paren())){
+					index++;
+					expr.left = parseS(tokens);
+					if(!match(tokens.get(index),new end_paren()));//TODO parse error
+					index++;
+				}
+				else{
+					throw new Exception();
+				}
+			}
+			else if(match(tokens.get(index),new open_paren())){
+
+				index++;
+				expr = parseS(tokens);
+
+				if(!match(tokens.get(index),new end_paren())){
+					throw new Exception();
+				}
+				index++;
+			}
+			else if(match(tokens.get(index), new var(""))){
+				expr = new Ast();
+				expr.opp = tokens.get(index);
+				index++;
+
+			}
+
+			return expr;
+		}
+
+		//}
+
 
 }

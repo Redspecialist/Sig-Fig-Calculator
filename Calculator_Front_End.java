@@ -6,8 +6,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -81,13 +79,9 @@ public class Calculator_Front_End extends JFrame{
 		public varPanel(){
 			super();
 			setLayout(new GridBagLayout());
-			//JLabel label = new JLabel("Please Enter an Expression Above First");
-			//GridBagConstraints gbc = new GridBagConstraints();
-			//add(label, gbc);
-
 		}
 
-		public void setupvars(Set<String> varNames){
+		public void setupvars(ArrayList<String> varNames){
 
 			removeAll();
 			GridBagConstraints gbc = new GridBagConstraints();
@@ -207,20 +201,14 @@ public class Calculator_Front_End extends JFrame{
 						JOptionPane.showMessageDialog(parent, "Result: " + ret);
 					}catch(Exception exception){
 						JOptionPane.showMessageDialog(null, "Malicious input detected please check input variables");
+						exception.printStackTrace();
+						backEnd.printAST(backEnd.expr);
 					}
 
 				}
 
 			});
-			calculate.addActionListener(new ActionListener(){
 
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-
-				}
-
-			});
 
 
 			clearAll = new JButton("Clear All");
@@ -246,4 +234,5 @@ public class Calculator_Front_End extends JFrame{
 		}
 
 	}
+
 }
