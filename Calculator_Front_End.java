@@ -26,7 +26,7 @@ public class Calculator_Front_End extends JFrame{
 	Calculator backEnd;
 	JTextField expression;
 	varPanel varP;
-	JLabel curExpression = new JLabel("Please Enter an Expression Above First");
+	JLabel curExpression = new JLabel("Please Enter an Expression Above");
 	JFrame parent;
 
 	public Calculator_Front_End(){
@@ -49,8 +49,9 @@ public class Calculator_Front_End extends JFrame{
 		temp.add(expression,gbc);
 
 		gbc.gridy++;
-		temp.add(curExpression,gbc);
 		curExpression.setFont(curExpression.getFont().deriveFont((float) 17.0));
+		temp.add(curExpression,gbc);
+		
 		
 		
 		gbc.gridy++;
@@ -133,6 +134,7 @@ public class Calculator_Front_End extends JFrame{
 		}
 	}
 
+	
 	class buttonPanel extends JPanel{
 		/**
 		 * 
@@ -157,7 +159,7 @@ public class Calculator_Front_End extends JFrame{
 				@Override
 				public void actionPerformed(ActionEvent event) {
 					if(!expression.getText().equals("")){
-						System.out.println(expression.getText());
+						
 						try{
 							backEnd.setFunction(expression.getText());
 							varP.setupvars(backEnd.getVariables());
@@ -166,7 +168,7 @@ public class Calculator_Front_End extends JFrame{
 							parent.pack();
 						}
 						catch(Exception e){
-							JOptionPane.showMessageDialog(null,"Error While Parsing: Please Check that your function input");
+							JOptionPane.showMessageDialog(null,"Error While Parsing: Please Check that your function input is mathematically valid");
 						}
 					}
 				}
@@ -200,8 +202,7 @@ public class Calculator_Front_End extends JFrame{
 						Value ret = backEnd.calculate();
 						JOptionPane.showMessageDialog(parent, "Result: " + ret);
 					}catch(Exception exception){
-						JOptionPane.showMessageDialog(null, "Malicious input detected please check input variables");
-						exception.printStackTrace();
+						JOptionPane.showMessageDialog(null, "Malicious input detected please check your variables");
 						backEnd.printAST(backEnd.expr);
 					}
 
@@ -221,9 +222,9 @@ public class Calculator_Front_End extends JFrame{
 				public void actionPerformed(ActionEvent e) {
 
 					varP.removeAll();
-					//varP.add(new JLabel("Please Enter an Expression Above First"));
-					curExpression.setText("Please Enter an Expression Above First");
-					curExpression.setFont(curExpression.getFont().deriveFont(18));
+					//curExpression.setFont(curExpression.getFont().deriveFont(18));
+					calculate.setEnabled(false);
+					curExpression.setText("Please Enter an Expression Above");
 					expression.setText("");
 					parent.pack();
 				}

@@ -54,23 +54,15 @@ public class Value {
 	}
 	
 	public String toString(){
-		
 		return sigFigs();
-
 	}
 
 	public Value add(Value v){
-
 		return new Value(scalar + v.scalar,propogateAddMinUncertainty(v));
-
-
 	}
 	
 	public Value sub(Value v){
-
 		return new Value(scalar - v.scalar,propogateAddMinUncertainty(v));
-
-
 	}
 
 	public Value mult(Value v){
@@ -82,21 +74,15 @@ public class Value {
 	}
 
 	public Value log(double base){
-		
 		return new Value(Math.log(scalar)/Math.log(base), uncertainty/scalar * Math.log(Math.E)/Math.log(base));
-		
 	}
 	
 	public double propogateAddMinUncertainty(Value v){
-
 		return Math.sqrt(Math.pow(v.uncertainty,2) + Math.pow(uncertainty, 2));
-
 	}
 
 	public double propogateMultDivUncertainty(Value v, double product){
-
 		return  product * Math.sqrt(Math.pow(v.uncertainty/v.scalar,2) + Math.pow(uncertainty/scalar, 2));
-
 	}
 
 }

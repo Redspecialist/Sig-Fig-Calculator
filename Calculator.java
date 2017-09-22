@@ -132,10 +132,6 @@ public class Calculator {
 	public Value calculate(){
 
 		if(varsLoaded){
-
-			for(String var: vars.keySet()){
-				System.out.println(var + " " + vars.get(var));
-			}
 			return calS(expr);
 		}else{
 			return null;
