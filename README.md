@@ -7,6 +7,6 @@ For those wishing to use the sig fig calculator download and run the executable 
 
 
 ## Figures
-![alt text](https://github.com/Redspecialist/Sig-Fig-Calculator/blob/master/SigFigCalculator.PNG)
+![alt text](https://github.com/Redspecialist/Sig-Fig-Calculator/blob/master/SigFigCalculator.PNG)  
 Here is an example rendering of the sig fig calculator. In order to properly use the following steps:
 1. Type in a formula in the formula box specified
